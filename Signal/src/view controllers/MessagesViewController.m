@@ -2018,8 +2018,18 @@ typedef enum : NSUInteger {
     return _editingDatabaseConnection;
 }
 
-
 - (void)yapDatabaseModified:(NSNotification *)notification {
+    // Currently, we update thread and message state every time
+    // the database is modified.  That doesn't seem optimal, but
+    // in practice it's efficient enough.
+    //
+    // 
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateContents];
+    });
+}
+
+- (void)updateContents {
     [self updateBackButtonAsync];
 
     if (isGroupConversation) {
@@ -2030,6 +2040,7 @@ typedef enum : NSUInteger {
               self.thread = [TSGroupThread threadWithGroupModel:gThread.groupModel transaction:transaction];
           }
         }];
+        [self setNavigationTitle];
     }
 
     NSArray *notifications = [self.uiDatabaseConnection beginLongLivedReadTransaction];
